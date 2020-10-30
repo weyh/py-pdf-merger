@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-import sys
-from os import path
+import os
+import re
 from optparse import OptionParser
-from typing import Tuple
+from typing import List, Tuple
 from datetime import datetime
 from PyPDF2 import utils, PdfFileReader, PdfFileMerger
 
@@ -28,20 +28,49 @@ def load_args(version) -> Tuple:
     return (options, args)
 
 
+def get_selection(file_list: list) -> List[str]:
+    selected_files:  List[str] = []
+
+    regex_a = re.compile(r"(\/|\\|^)\*.pdf$")
+    regex_b = re.compile(r"(\/|\\|^)\*(.\*|)$")
+
+    for file in file_list:
+        if regex_a.search(file):  # *.pdf
+            dir = os.path.dirname(file)
+
+            if not dir:
+                dir = "./"
+
+            for f in os.listdir(dir):
+                if len(f) >= 4 and f[-4:] == ".pdf":
+                    selected_files.append(os.path.join(dir, f))
+        elif regex_b.search(file):  # *
+            dir = os.path.dirname(file)
+
+            if not dir:
+                dir = "./"
+
+            for f in os.listdir(dir):
+                selected_files.append(os.path.join(dir, f))
+        else:
+            selected_files.append(file)
+
+    return selected_files
+
+
 def main():
-    options, args = load_args("1.0.0")
+    options, args = load_args("1.0.2")
 
     valid_pdfs = []
 
-    for file in args:
+    for file in get_selection(args):
         try:
             pdf = PdfFileReader(open(file, "rb"))
-        except(IOError):
-            print(f"\u001b[31;1m{file} could not be found. This file will be skipped!\u001b[0m")
+            valid_pdfs.append((pdf, os.path.basename(file).replace(".pdf", "")))
         except(utils.PdfReadError):
             print(f"\u001b[33;1m{file} is not a valid pdf. This file will be skipped!\u001b[0m")
-        else:
-            valid_pdfs.append((pdf, path.basename(file)))
+        except(IOError):
+            print(f"\u001b[31;1m{file} thrown an IOError. This file will be skipped!\u001b[0m")
 
     pdf_merger = PdfFileMerger()
     for pdf_obj, pdf_name in valid_pdfs:
