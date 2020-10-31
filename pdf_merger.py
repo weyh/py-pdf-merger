@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 import os
 import re
@@ -18,6 +19,9 @@ def load_args(version) -> Tuple:
 
     parser.add_option("-D", "--no_bookmark_import", dest="import_bookmarks", action="store_false", default=True,
                       help="Doesn't import bookmarks from source pdfs. Has no effect on the file name bookmarks.")
+
+    parser.add_option("-q", "--quiet", dest="quiet", action="store_true", default=False,
+                      help="No text will be written to stdout.")
 
     options, args = parser.parse_args()
 
@@ -44,7 +48,7 @@ def get_selection(file_list: list) -> List[str]:
             for f in os.listdir(dir):
                 if len(f) >= 4 and f[-4:] == ".pdf":
                     selected_files.append(os.path.join(dir, f))
-        elif regex_b.search(file):  # *
+        elif regex_b.search(file):  # *, *.*
             dir = os.path.dirname(file)
 
             if not dir:
@@ -58,8 +62,13 @@ def get_selection(file_list: list) -> List[str]:
     return selected_files
 
 
+def print_q(text: str, quiet: bool):
+    if not quiet:
+        print(text)
+
+
 def main():
-    options, args = load_args("1.0.2")
+    options, args = load_args("1.1.0")
 
     valid_pdfs = []
 
@@ -68,9 +77,9 @@ def main():
             pdf = PdfFileReader(open(file, "rb"))
             valid_pdfs.append((pdf, os.path.basename(file).replace(".pdf", "")))
         except(utils.PdfReadError):
-            print(f"\u001b[33;1m{file} is not a valid pdf. This file will be skipped!\u001b[0m")
+            print_q(f"\u001b[33;1m{file} is not a valid pdf. This file will be skipped!\u001b[0m", options.quiet)
         except(IOError):
-            print(f"\u001b[31;1m{file} thrown an IOError. This file will be skipped!\u001b[0m")
+            print_q(f"\u001b[31;1m{file} thrown an IOError. This file will be skipped!\u001b[0m", options.quiet)
 
     pdf_merger = PdfFileMerger()
     for pdf_obj, pdf_name in valid_pdfs:
@@ -80,7 +89,7 @@ def main():
             pdf_merger.append(pdf_obj, import_bookmarks=options.import_bookmarks)
 
     pdf_merger.write(options.output_file_name)
-    print(f"'{options.output_file_name}' file has been successfully created!")
+    print_q(f"'{options.output_file_name}' file has been successfully created!", options.quiet)
 
 
 if __name__ == "__main__":
