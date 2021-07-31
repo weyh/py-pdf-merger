@@ -1,0 +1,13 @@
+{
+    "name": "PDF Merger",
+    "inputFiles": "Input files:",
+    "browse": "Browse",
+    "PDFFiles": "PDF Files",
+    "ALLFiles": "ALL Files",
+    "importBookmarks": "Keep Bookmarks",
+    "fileNameBookmarks": "File names as bookmarks",
+    "outputFile": "Output file:",
+    "saveAs": "Save As",
+    "create": "Create",
+    "quit": "Quit"
+}

@@ -1,0 +1,13 @@
+{
+    "name": "PDF Egyesítő",
+    "inputFiles": "Bemeneti fájlok:",
+    "browse": "Tallózás",
+    "PDFFiles": "PDF Fájlok",
+    "ALLFiles": "ALL Fájlok",
+    "importBookmarks": "Könyvejlzők megtartása",
+    "fileNameBookmarks": "Fájlnevek könyvjeztőként",
+    "outputFile": "Kimeneti fájl:",
+    "saveAs": "Mentés",
+    "create": "Létrehoz",
+    "quit": "Kilépés"
+}
