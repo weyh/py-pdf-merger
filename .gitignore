@@ -1,6 +1,6 @@
 *.pdf
 __pycache__
-.vscode
 build/
 dist/
 *.spec
+.vscode/launch.json
