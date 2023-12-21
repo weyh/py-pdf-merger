@@ -1,44 +1,45 @@
-from optparse import OptionParser
+from argparse import ArgumentParser
 import platform
 import sys
 import os
 import shutil
 import subprocess as sb
 
-file_dir = os.path.dirname(sys.argv[0])
-lang_dir = os.path.join(file_dir, "lang")
-bin_dir = os.path.join(file_dir, "build", "bin")
+FILE_DIR = os.path.dirname(sys.argv[0])
+LANG_DIR = os.path.join(FILE_DIR, "lang")
+BIN_DIR = os.path.join(FILE_DIR, "build", "bin")
 
-files = {
-    "icon": os.path.join(file_dir, "icon.ico"),
-    "license": os.path.join(file_dir, "LICENSE"),
-    "readme": os.path.join(file_dir, "README.md")
+FILES = {
+    "icon": os.path.join(FILE_DIR, "icon.ico"),
+    "license": os.path.join(FILE_DIR, "LICENSE"),
+    "readme": os.path.join(FILE_DIR, "README.md")
 }
 
-cmd_args = {
-    "cli": os.path.join(file_dir, "pdf_merger.py"),
-    "ui": os.path.join(file_dir, "pdf_merger_ui.pyw"),
+CMD_ARGS = {
+    "cli": os.path.join(FILE_DIR, "pdf_merger.py"),
+    "ui": os.path.join(FILE_DIR, "pdf_merger_ui.pyw"),
     "cli_name": "PDF Merger",
     "ui_name": "PDF Merger UI"
 }
 
 
 def get_cmd(is_win: bool, is_ui: bool) -> str:
-    file = cmd_args['cli']
-    name = cmd_args['cli_name']
+    file = CMD_ARGS['cli']
+    name = CMD_ARGS['cli_name']
     if is_ui:
-        file = cmd_args['ui']
-        name = cmd_args['ui_name']
+        file = CMD_ARGS['ui']
+        name = CMD_ARGS['ui_name']
 
     extra_args = ""
     if is_win:
-        extra_args = f"--win-private-assemblies -i {files['icon']}"
+        extra_args = f"--win-private-assemblies -i {FILES['icon']}"
 
+    # pyinstaller==5.13.2 needed
     return f"pyinstaller \"{file}\" -n \"{name}\" --onefile {extra_args} --workpath=\"./build/tmp\" --distpath=\"./build/bin\""
 
 
 def pkg(is_win: bool, is_ui: bool):
-    pkg_dir = os.path.join(file_dir, "build", "pkg")
+    pkg_dir = os.path.join(FILE_DIR, "build", "pkg")
     if not os.path.exists(pkg_dir):
         os.mkdir(pkg_dir)
 
@@ -50,65 +51,65 @@ def pkg(is_win: bool, is_ui: bool):
     if is_win:
         arc_type = "zip"
 
-    shutil.make_archive(os.path.join(pkg_dir, pkg_name), arc_type, bin_dir)
+    shutil.make_archive(os.path.join(pkg_dir, pkg_name), arc_type, BIN_DIR)
     return
 
 
 def build(is_ui: bool):
-    bin_lang_dir = os.path.join(bin_dir, "lang")
+    bin_lang_dir = os.path.join(BIN_DIR, "lang")
 
-    shutil.copytree(lang_dir, bin_lang_dir, dirs_exist_ok=True)
-    shutil.copyfile(files["icon"],
-                    os.path.join(bin_dir, "icon.ico"))
-    shutil.copyfile(files["license"],
-                    os.path.join(bin_dir, "LICENSE"))
-    shutil.copyfile(files["readme"],
-                    os.path.join(bin_dir, "README.md"))
+    shutil.copytree(LANG_DIR, bin_lang_dir, dirs_exist_ok=True)
+    shutil.copyfile(FILES["icon"],
+                    os.path.join(BIN_DIR, "icon.ico"))
+    shutil.copyfile(FILES["license"],
+                    os.path.join(BIN_DIR, "LICENSE"))
+    shutil.copyfile(FILES["readme"],
+                    os.path.join(BIN_DIR, "README.md"))
 
     sb.call(get_cmd(platform.system() == "Windows", is_ui))
     return
 
 
 def clean():
-    if os.path.isdir(os.path.join(file_dir, "build", "tmp")):
-        shutil.rmtree(os.path.join(file_dir, "build", "tmp"))
-    if os.path.isdir(os.path.join(file_dir, "__pycache__")):
-        shutil.rmtree(os.path.join(file_dir, "__pycache__"))
+    if os.path.isdir(os.path.join(FILE_DIR, "build", "tmp")):
+        shutil.rmtree(os.path.join(FILE_DIR, "build", "tmp"))
+    if os.path.isdir(os.path.join(FILE_DIR, "__pycache__")):
+        shutil.rmtree(os.path.join(FILE_DIR, "__pycache__"))
 
-    if os.path.isfile(os.path.join(file_dir, f"{cmd_args['cli_name']}.spec")):
-        os.remove(os.path.join(file_dir, f"{cmd_args['cli_name']}.spec"))
-    if os.path.isfile(os.path.join(file_dir, f"{cmd_args['ui_name']}.spec")):
-        os.remove(os.path.join(file_dir, f"{cmd_args['ui_name']}.spec"))
+    if os.path.isfile(os.path.join(FILE_DIR, f"{CMD_ARGS['cli_name']}.spec")):
+        os.remove(os.path.join(FILE_DIR, f"{CMD_ARGS['cli_name']}.spec"))
+    if os.path.isfile(os.path.join(FILE_DIR, f"{CMD_ARGS['ui_name']}.spec")):
+        os.remove(os.path.join(FILE_DIR, f"{CMD_ARGS['ui_name']}.spec"))
 
 
 print("Starting...")
 
 if __name__ == "__main__":
-    parser = OptionParser()
-    parser.add_option("-p", dest="pkg", action="store_true", default=False)
-    parser.add_option("-b", dest="build", action="store_true", default=False)
-    parser.add_option("-c", dest="clean", action="store_true", default=False)
+    parser = ArgumentParser()
+    parser.add_argument("-p", dest="pkg", action="store_true", default=False)
+    parser.add_argument("-b", dest="build", action="store_true", default=False)
+    parser.add_argument("-c", dest="clean", action="store_true", default=False)
 
-    parser.add_option("--cli", dest="cli", action="store_true", default=False)
-    parser.add_option("--ui", dest="ui", action="store_true", default=False)
+    parser.add_argument("--cli", dest="cli", action="store_true", default=False)
+    parser.add_argument("--ui", dest="ui", action="store_true", default=False)
 
-    options, args = parser.parse_args()
+    args = parser.parse_args()
 
-    if options.build:
-        build(options.ui)
+    if args.build:
+        build(args.ui)
 
-    exe_bin = cmd_args['cli_name']
-    if options.ui:
-        exe_bin = cmd_args['ui_name']
+    EXE_BIN = CMD_ARGS['cli_name']
+    if args.ui:
+        EXE_BIN = CMD_ARGS['ui_name']
 
     if platform.system() == "Windows":
-        exe_bin = exe_bin + ".exe"
+        EXE_BIN = EXE_BIN + ".exe"
 
-    exe_bin_path = os.path.join(bin_dir, exe_bin)
-    if options.pkg and os.path.exists(exe_bin_path):
-        pkg(platform.system() == "Windows", options.ui)
+    exe_bin_path = os.path.join(BIN_DIR, EXE_BIN)
+    if args.pkg and os.path.exists(exe_bin_path):
+        pkg(platform.system() == "Windows", args.ui)
 
-    if options.clean:
+    if args.clean:
         clean()
 
     print("DONE!")

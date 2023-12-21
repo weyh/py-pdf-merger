@@ -1,38 +1,63 @@
+from dataclasses import dataclass
 import os
 import re
-from optparse import OptionParser
+from argparse import ArgumentParser
 from typing import List, Tuple
 from datetime import datetime
 from PyPDF2 import errors, PdfReader, PdfMerger
 
-VERSION = "1.1.0"
+VERSION = "2.0.0"
 
+@dataclass
+class Args:
+    files: List[str]
+    output_file_name: str
+    file_name_bookmarks: bool
+    import_bookmarks: bool
+    quiet: bool
 
-def load_args() -> Tuple:
-    parser = OptionParser(version=VERSION)
+def load_args() -> Args:
+    parser = ArgumentParser(description=f"PDF Merger v{VERSION}")
 
-    parser.add_option("-o", "--output", dest="output_file_name", help="Output filename",
+    parser.add_argument("-f", "--file",
+            dest="files",
+            nargs='+',
+            required=True,
+            default=f"output_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf",
             metavar="[file name]",
-            default=f"output_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf")
+            help="PDF files to merge")
 
-    parser.add_option("-d", "--disable_file_name_bookmarks", dest="file_name_bookmarks",
-            action="store_false", default=True,
+    parser.add_argument("-o", "--output",
+            dest="output_file_name",
+            default=f"output_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf",
+            metavar="[file name]",
+            help="Output filename")
+
+    parser.add_argument("-d", "--disable-file-name-bookmarks",
+            dest="file_name_bookmarks",
+            action="store_false",
+            default=True,
             help="File names will not be added to bookmarks")
 
-    parser.add_option("-D", "--no_bookmark_import", dest="import_bookmarks",
-            action="store_false", default=True,
-            help="Doesn't import bookmarks from source pdfs. Has no effect on the file name bookmarks.")
+    parser.add_argument("-D", "--no-bookmark-import",
+            dest="import_bookmarks",
+            action="store_false",
+            default=True,
+            help="Doesn't import bookmarks from source PDFs")
 
-    parser.add_option("-q", "--quiet", dest="quiet", action="store_true", default=False,
-            help="No text will be written to stdout.")
+    parser.add_argument("-q", "--quiet",
+            dest="quiet",
+            action="store_true",
+            default=False,
+            help="No text will be written to stdout")
 
-    options, args = parser.parse_args()
+    args = parser.parse_args()
 
-    if len(args) == 0:
+    if len(vars(args)) == 0:
         parser.print_help()
         exit(1)
 
-    return (options, args)
+    return Args(**vars(args))
 
 
 def get_selection(file_list: list) -> List[str]:
@@ -70,30 +95,32 @@ def print_q(text: str, quiet: bool):
         print(text)
 
 
-def create(_args: Tuple):
-    options, args = _args
-
+def create(args: Args):
     valid_pdfs: List[Tuple[str, str]] = []
 
-    for file in get_selection(args):
+    for file in get_selection(args.files):
         with open(file, "rb") as s:
             try:
                 _ = PdfReader(s)
                 valid_pdfs.append((file, os.path.basename(file).replace(".pdf", "")))
             except errors.PdfReadError:
-                print_q(f"\u001b[33;1m{file} is not a valid pdf. This file will be skipped!\u001b[0m", options.quiet)
+                print_q(f"\u001b[33;1m{file} is not a valid pdf. This file will be skipped!\u001b[0m", args.quiet)
             except IOError:
-                print_q(f"\u001b[31;1m{file} thrown an IOError. This file will be skipped!\u001b[0m", options.quiet)
+                print_q(f"\u001b[31;1m{file} thrown an IOError. This file will be skipped!\u001b[0m", args.quiet)
 
     pdf_merger = PdfMerger()
-    for pdf_file, pdf_name in valid_pdfs:
-        if options.file_name_bookmarks:
-            pdf_merger.append(pdf_file, pdf_name, import_outline=options.import_bookmarks)
-        else:
-            pdf_merger.append(pdf_file, import_outline=options.import_bookmarks)
+    try:
+        for pdf_file, pdf_name in valid_pdfs:
+            if args.file_name_bookmarks:
+                pdf_merger.append(pdf_file, pdf_name, import_outline=args.import_bookmarks)
+            else:
+                pdf_merger.append(pdf_file, import_outline=args.import_bookmarks)
 
-    pdf_merger.write(options.output_file_name)
-    print_q(f"'{options.output_file_name}' file has been successfully created!", options.quiet)
+        pdf_merger.write(args.output_file_name)
+    finally:
+        pdf_merger.close()
+
+    print_q(f"'{args.output_file_name}' file has been successfully created!", args.quiet)
 
 
 if __name__ == "__main__":

@@ -4,3 +4,4 @@ build/
 dist/
 *.spec
 .vscode/launch.json
+.vscode

@@ -1,15 +1,13 @@
 import os
 import json
-from collections import namedtuple
-from optparse import OptionParser
-from typing import Tuple
+from argparse import ArgumentParser, Namespace as APNamespace
 import PySimpleGUI as sg
 import pdf_merger as pm
 
 
-def load_args() -> Tuple:
-    parser = OptionParser(version=pm.VERSION)
-    parser.add_option("-l", "--lang", dest="lang", help="Language", metavar="[lang]",
+def load_args() -> APNamespace:
+    parser = ArgumentParser(description=f"PDF Merger v{pm.VERSION}")
+    parser.add_argument("-l", "--lang", dest="lang", help="Language", metavar="[lang]",
                       default="en")
 
     return parser.parse_args()
@@ -17,12 +15,12 @@ def load_args() -> Tuple:
 
 if __name__ == "__main__":
     lang = {}
-    options, args = load_args()
+    args = load_args()
 
-    if not os.path.isfile(f"./lang/{options.lang}.json"):
-        options.lang = "en"
+    if not os.path.isfile(f"./lang/{args.lang}.json"):
+        args.lang = "en"
 
-    with open(f"./lang/{options.lang}.json", encoding="utf8") as f:
+    with open(f"./lang/{args.lang}.json", encoding="utf8") as f:
         lang = json.loads(f.read())
 
     sg.theme("SystemDefaultForReal")
@@ -51,14 +49,12 @@ if __name__ == "__main__":
         if event == sg.WIN_CLOSED or event == lang["quit"]:
             break
         if event == lang["create"] and values[lang["saveAs"]] != "" and values[lang["browse"]] != "":
-            tmp_args_dict = {
-                "output_file_name": values[lang["saveAs"]],
-                "file_name_bookmarks": values[2],
-                "import_bookmarks": values[1],
-                "quiet": True
-            }
+            tmp_args = pm.Args(sorted(values[lang["browse"]].split(';')),
+                output_file_name=values[lang["saveAs"]],
+                file_name_bookmarks=values[2],
+                import_bookmarks=values[1],
+                quiet=True)
 
-            pm.create((namedtuple("ObjectName", tmp_args_dict.keys())(*tmp_args_dict.values()),
-                       sorted(values[lang["browse"]].split(';'))))
+            pm.create(tmp_args)
 
     window.close()
