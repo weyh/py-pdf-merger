@@ -1,9 +1,9 @@
+import os
+import json
 from collections import namedtuple
 from optparse import OptionParser
 from typing import Tuple
 import PySimpleGUI as sg
-import os
-import json
 import pdf_merger as pm
 
 
@@ -31,8 +31,8 @@ if __name__ == "__main__":
         [sg.Text(lang["inputFiles"])],
         [sg.Input(), sg.FilesBrowse(button_text=lang["browse"],
                                     file_types=((lang["PDFFiles"], "*.pdf"), (lang["ALLFiles"], "*.*")))],
-        [sg.Checkbox(lang["importBookmarks"], default=False),
-         sg.Checkbox(lang["fileNameBookmarks"], default=False)],
+        [sg.Checkbox(lang["importBookmarks"], default=True),
+         sg.Checkbox(lang["fileNameBookmarks"], default=True)],
         [sg.Text(lang["outputFile"])],
         [sg.Input(), sg.FileSaveAs(button_text=lang["saveAs"],
                                    file_types=((lang["PDFFiles"], "*.pdf"), (lang["ALLFiles"], "*.*")),
@@ -43,7 +43,11 @@ if __name__ == "__main__":
     window = sg.Window(lang["name"], layout, icon="./icon.ico")
 
     while True:
-        event, values = window.read()
+        val = window.read()
+        if val is None:
+            continue
+
+        event, values = val
         if event == sg.WIN_CLOSED or event == lang["quit"]:
             break
         if event == lang["create"] and values[lang["saveAs"]] != "" and values[lang["browse"]] != "":
